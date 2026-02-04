@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>공문서 제작 도구</title>
+  <style>
+    :root{
+      --bg:#f4f6f9;
+      --card:#ffffff;
+      --ink:#111827;
+      --muted:#6b7280;
+      --line:#d1d5db;
+      --line2:#9ca3af;
+      --accent:#1f4e79; /* 공공기관 느낌의 딥블루 */
+      --focus: rgba(31,78,121,.25);
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: "Noto Sans KR", system-ui, -apple-system, Segoe UI, Roboto, "Apple SD Gothic Neo", "Malgun Gothic", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    header{
+      padding:18px 18px 10px;
+      max-width: 1220px;
+      margin: 0 auto;
+      display:flex;
+      align-items:flex-end;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    header h1{
+      margin:0;
+      font-size:18px;
+      letter-spacing:-0.02em;
+    }
+    header .sub{
+      margin:6px 0 0;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .wrap{
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 0 18px 18px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:14px;
+    }
+    @media (min-width: 1100px){
+      .wrap{ grid-template-columns: 420px 1fr; }
+    }
+
+    .panel{
+      background: var(--card);
+      border:1px solid var(--line);
+      border-radius: 12px;
+      overflow:hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,.05);
+    }
+
+    .panelHeader{
+      padding: 12px 14px;
+      background: linear-gradient(180deg, rgba(31,78,121,.06), rgba(31,78,121,0));
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .panelHeader .title{
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .badge{
+      font-size:11px;
+      color: var(--accent);
+      border:1px solid rgba(31,78,121,.25);
+      background: rgba(31,78,121,.06);
+      padding: 5px 8px;
+      border-radius: 999px;
+      user-select:none;
+    }
+
+    .panelBody{ padding: 12px 14px 14px; }
+
+    /* Form */
+    .grid{
+      display:grid;
+      gap:10px;
+    }
+    .field{ display:grid; gap:6px; }
+    label{ font-size:12px; color: var(--muted); }
+    input[type="text"], input[type="date"], select, textarea{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 10px;
+      font-size: 13px;
+      outline:none;
+      background: #fff;
+    }
+    textarea{ min-height: 160px; resize: vertical; line-height:1.6; }
+    input:focus, select:focus, textarea:focus{
+      border-color: rgba(31,78,121,.6);
+      box-shadow: 0 0 0 4px var(--focus);
+    }
+
+    .row2{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+    .row3{ display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px; }
+    @media (max-width: 520px){
+      .row2, .row3{ grid-template-columns: 1fr; }
+    }
+
+    .buttons{
+      display:grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap:10px;
+      margin-top: 12px;
+    }
+    @media (min-width: 1100px){
+      .buttons{ grid-template-columns: 1fr; }
+    }
+
+    button{
+      border:1px solid var(--line2);
+      background:#fff;
+      padding: 11px 12px;
+      border-radius: 10px;
+      cursor:pointer;
+      font-weight:700;
+      font-size: 13px;
+      transition: transform .08s ease, background .12s ease, border-color .12s ease;
+    }
+    button:hover{ transform: translateY(-1px); border-color: var(--accent); background: rgba(31,78,121,.04); }
+    button.primary{ border-color: rgba(31,78,121,.55); background: rgba(31,78,121,.08); }
+    button.danger{ border-color: rgba(185,28,28,.55); background: rgba(185,28,28,.06); }
+
+    .note{
+      margin-top:10px;
+      font-size:11px;
+      color: var(--muted);
+      line-height:1.5;
+    }
+
+    /* Preview A4 */
+    .previewWrap{
+      padding: 14px;
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
+      overflow:auto;
+      background: repeating-linear-gradient(45deg, rgba(0,0,0,.02), rgba(0,0,0,.02) 10px, rgba(0,0,0,.03) 10px, rgba(0,0,0,.03) 20px);
+    }
+    .a4{
+      width: 210mm;
+      min-height: 297mm;
+      background:#fff;
+      color:#000;
+      border:1px solid #cfcfcf;
+      box-shadow: 0 16px 40px rgba(0,0,0,.12);
+      padding: 18mm 16mm;
+    }
+
+    /* 공문 스타일 */
+    .docTop{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+    }
+    .org{
+      font-size: 16px;
+      font-weight: 800;
+      letter-spacing:-0.02em;
+    }
+    .meta{
+      width: 72mm;
+      border:1px solid #000;
+      border-collapse:collapse;
+      font-size: 11px;
+    }
+    .meta td{
+      border:1px solid #000;
+      padding: 3px 5px;
+      vertical-align:middle;
+    }
+    .meta .k{ width: 22mm; font-weight:700; background: #f6f6f6; }
+
+    .titleLine{
+      margin: 10mm 0 6mm;
+      text-align:center;
+      font-size: 20px;
+      font-weight: 900;
+      letter-spacing: 0.02em;
+    }
+    .hr{ height:1px; background:#000; margin: 4mm 0 6mm; }
+
+    .infoTable{
+      width:100%;
+      border-collapse:collapse;
+      font-size: 12px;
+    }
+    .infoTable td{
+      border:1px solid #000;
+      padding: 5px 6px;
+      vertical-align:top;
+    }
+    .infoTable .k{
+      width: 22mm;
+      background:#f6f6f6;
+      font-weight: 700;
+      white-space:nowrap;
+    }
+
+    .bodyArea{
+      margin-top: 6mm;
+      font-size: 12.5px;
+      line-height: 1.75;
+      white-space: pre-wrap;
+      word-break: break-word;
+      min-height: 120mm;
+    }
+
+    .attach{
+      margin-top: 6mm;
+      font-size: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .bottom{
+      margin-top: 10mm;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:flex-end;
+    }
+    .contact{
+      font-size: 11.5px;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .approval{
+      width: 72mm;
+      border:1px solid #000;
+      border-collapse:collapse;
+      font-size: 11px;
+      table-layout:fixed;
+    }
+    .approval th, .approval td{
+      border:1px solid #000;
+      padding: 4px 5px;
+      text-align:center;
+      vertical-align:middle;
+      height: 18mm;
+    }
+    .approval th{ background:#f6f6f6; height:auto; padding: 4px 5px; font-weight:800; }
+
+    .mutedPreview{ color:#666; }
+
+    /* Print */
+    @media print{
+      body{ background:#fff; }
+      header, .panel.formPanel{ display:none !important; }
+      .wrap{ display:block; padding:0; }
+      .panel.previewPanel{ border:none; box-shadow:none; }
+      .previewWrap{ padding:0; background:#fff; }
+      .a4{ border:none; box-shadow:none; width:210mm; min-height:297mm; padding: 18mm 16mm; }
+      @page{ size: A4; margin: 0; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1>공문서 제작용 웹페이지</h1>
+      <div class="sub">왼쪽 입력 → 오른쪽 A4 공문 미리보기. 새로고침해도 내용이 유지됩니다(브라우저 로컬 저장).</div>
+    </div>
+    <div class="badge" id="saveState">자동 저장: 대기</div>
+  </header>
+
+  <div class="wrap">
+    <!-- Left: Form -->
+    <section class="panel formPanel" aria-label="입력폼">
+      <div class="panelHeader">
+        <div class="title">입력</div>
+        <div class="badge" id="lastSaved">저장 기록 없음</div>
+      </div>
+      <div class="panelBody">
+        <div class="grid">
+          <div class="field">
+            <label for="org">기관/부서명</label>
+            <input id="org" type="text" placeholder="예) 안동대학교 기계시스템공학과" />
+          </div>
+
+          <div class="row3">
+            <div class="field">
+              <label for="docNo">문서번호</label>
+              <input id="docNo" type="text" placeholder="예) 기계시스템-2026-001" />
+            </div>
+            <div class="field">
+              <label for="date">시행일자</label>
+              <input id="date" type="date" />
+            </div>
+            <div class="field">
+              <label for="open">공개구분</label>
+              <select id="open">
+                <option value="공개" selected>공개</option>
+                <option value="부분공개">부분공개</option>
+                <option value="비공개">비공개</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label for="to">수신</label>
+              <input id="to" type="text" placeholder="예) ○○시청 ○○과장" />
+            </div>
+            <div class="field">
+              <label for="cc">참조</label>
+              <input id="cc" type="text" placeholder="예) ○○팀, ○○담당" />
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="subject">제목</label>
+            <input id="subject" type="text" placeholder="예) 2026년 상반기 교육 운영계획(안) 제출" />
+          </div>
+
+          <div class="field">
+            <label for="body">본문</label>
+            <textarea id="body" placeholder="예)
+1. 귀 기관의 무궁한 발전을 기원합니다.
+2. 아래와 같이 ..."></textarea>
+          </div>
+
+          <div class="field">
+            <label for="attach">붙임</label>
+            <textarea id="attach" placeholder="예)
+붙임  1. ○○ 계획(안) 1부.
+      2. ○○ 서식 1부.  끝."></textarea>
+          </div>
+
+          <div class="row2">
+            <div class="field">
+              <label for="contact">담당자 및 연락처</label>
+              <textarea id="contact" placeholder="예)
+담당: 홍길동(주무관)
+전화: 000-0000-0000
+전자우편: example@go.kr"></textarea>
+            </div>
+            <div class="grid">
+              <div class="field">
+                <label for="appr1">결재란(1)</label>
+                <input id="appr1" type="text" placeholder="예) 담당" />
+              </div>
+              <div class="field">
+                <label for="appr2">결재란(2)</label>
+                <input id="appr2" type="text" placeholder="예) 과장" />
+              </div>
+            </div>
+          </div>
+
+          <div class="buttons">
+            <button class="primary" id="btnSave" type="button">1) 저장 (브라우저에 임시 저장)</button>
+            <button id="btnDoc" type="button">2) 워드파일 (.doc) 다운로드</button>
+            <button id="btnPrint" type="button">3) PDF 인쇄</button>
+            <button class="danger" id="btnReset" type="button">4) 초기화</button>
+          </div>
+
+          <div class="note">
+            • 자동 저장: 입력할 때마다 로컬 저장(localStorage)에 반영됩니다.<br/>
+            • 워드(.doc): 미리보기 내용을 Word에서 열 수 있는 형식으로 다운로드합니다(레이아웃은 환경에 따라 약간 달라질 수 있음).<br/>
+            • PDF: <b>인쇄 → PDF로 저장</b>을 선택하면 됩니다.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: Preview -->
+    <section class="panel previewPanel" aria-label="A4 미리보기">
+      <div class="panelHeader">
+        <div class="title">A4 공문서 미리보기</div>
+        <div class="badge">A4 · 단정한 공공기관 스타일</div>
+      </div>
+      <div class="previewWrap">
+        <div class="a4" id="a4">
+          <div class="docTop">
+            <div>
+              <div class="org" id="pvOrg">기관/부서명</div>
+              <div style="margin-top:2mm; font-size:11.5px; color:#333">(공문)</div>
+            </div>
+            <table class="meta" aria-label="문서 메타">
+              <tr><td class="k">문서번호</td><td id="pvDocNo" class="mutedPreview">-</td></tr>
+              <tr><td class="k">시행일자</td><td id="pvDate" class="mutedPreview">-</td></tr>
+              <tr><td class="k">공개구분</td><td id="pvOpen" class="mutedPreview">-</td></tr>
+            </table>
+          </div>
+
+          <div class="titleLine">공 문</div>
+          <div class="hr"></div>
+
+          <table class="infoTable" aria-label="수신/제목">
+            <tr>
+              <td class="k">수신</td>
+              <td id="pvTo" class="mutedPreview">-</td>
+            </tr>
+            <tr>
+              <td class="k">참조</td>
+              <td id="pvCc" class="mutedPreview">-</td>
+            </tr>
+            <tr>
+              <td class="k">제목</td>
+              <td id="pvSubject" style="font-weight:800">(제목)</td>
+            </tr>
+          </table>
+
+          <div class="bodyArea" id="pvBody">(본문)</div>
+
+          <div class="attach" id="pvAttach"></div>
+
+          <div class="bottom">
+            <div class="contact" id="pvContact">(담당자 및 연락처)</div>
+            <table class="approval" aria-label="결재란">
+              <tr><th colspan="2">결 재</th></tr>
+              <tr>
+                <td id="pvAppr1">결재1</td>
+                <td id="pvAppr2">결재2</td>
+              </tr>
+              <tr>
+                <td style="height:22mm"></td>
+                <td></td>
+              </tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'official_doc_builder_v1';
+
+    const el = (id) => document.getElementById(id);
+
+    const fields = {
+      org: el('org'),
+      docNo: el('docNo'),
+      date: el('date'),
+      open: el('open'),
+      to: el('to'),
+      cc: el('cc'),
+      subject: el('subject'),
+      body: el('body'),
+      attach: el('attach'),
+      contact: el('contact'),
+      appr1: el('appr1'),
+      appr2: el('appr2'),
+    };
+
+    const pv = {
+      org: el('pvOrg'),
+      docNo: el('pvDocNo'),
+      date: el('pvDate'),
+      open: el('pvOpen'),
+      to: el('pvTo'),
+      cc: el('pvCc'),
+      subject: el('pvSubject'),
+      body: el('pvBody'),
+      attach: el('pvAttach'),
+      contact: el('pvContact'),
+      appr1: el('pvAppr1'),
+      appr2: el('pvAppr2'),
+    };
+
+    const saveState = el('saveState');
+    const lastSaved = el('lastSaved');
+
+    function nowString(){
+      const d = new Date();
+      const pad = (n)=> String(n).padStart(2,'0');
+      return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    }
+
+    function sanitizeText(s){
+      if(s == null) return '';
+      return String(s).replace(/\r\n/g,'\n');
+    }
+
+    function dataFromForm(){
+      return {
+        org: sanitizeText(fields.org.value),
+        docNo: sanitizeText(fields.docNo.value),
+        date: fields.date.value || '',
+        open: fields.open.value || '공개',
+        to: sanitizeText(fields.to.value),
+        cc: sanitizeText(fields.cc.value),
+        subject: sanitizeText(fields.subject.value),
+        body: sanitizeText(fields.body.value),
+        attach: sanitizeText(fields.attach.value),
+        contact: sanitizeText(fields.contact.value),
+        appr1: sanitizeText(fields.appr1.value),
+        appr2: sanitizeText(fields.appr2.value),
+        _savedAt: null,
+      };
+    }
+
+    function applyToPreview(data){
+      pv.org.textContent = data.org || '기관/부서명';
+      pv.docNo.textContent = data.docNo || '-';
+      pv.docNo.className = data.docNo ? '' : 'mutedPreview';
+
+      pv.date.textContent = data.date ? data.date : '-';
+      pv.date.className = data.date ? '' : 'mutedPreview';
+
+      pv.open.textContent = data.open || '-';
+      pv.open.className = data.open ? '' : 'mutedPreview';
+
+      pv.to.textContent = data.to || '-';
+      pv.to.className = data.to ? '' : 'mutedPreview';
+
+      pv.cc.textContent = data.cc || '-';
+      pv.cc.className = data.cc ? '' : 'mutedPreview';
+
+      pv.subject.textContent = data.subject || '(제목)';
+
+      pv.body.textContent = data.body || '(본문)';
+
+      // 붙임은 비어있으면 표시 줄이 과해 보여서 숨김 처리
+      if((data.attach || '').trim()){
+        pv.attach.style.display = 'block';
+        pv.attach.textContent = data.attach;
+      } else {
+        pv.attach.style.display = 'none';
+        pv.attach.textContent = '';
+      }
+
+      pv.contact.textContent = data.contact || '(담당자 및 연락처)';
+      pv.contact.className = data.contact ? '' : 'mutedPreview';
+
+      pv.appr1.textContent = data.appr1 || '결재1';
+      pv.appr2.textContent = data.appr2 || '결재2';
+    }
+
+    function saveToStorage(data, showBadge=true){
+      const payload = { ...data, _savedAt: nowString() };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      if(showBadge){
+        saveState.textContent = '자동 저장: 완료';
+        setTimeout(()=> saveState.textContent = '자동 저장: 대기', 1100);
+      }
+      lastSaved.textContent = `마지막 저장: ${payload._savedAt}`;
+      return payload;
+    }
+
+    function loadFromStorage(){
+      try{
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if(!raw) return null;
+        const data = JSON.parse(raw);
+        return data;
+      } catch(e){
+        return null;
+      }
+    }
+
+    function applyToForm(data){
+      fields.org.value = data.org || '';
+      fields.docNo.value = data.docNo || '';
+      fields.date.value = data.date || '';
+      fields.open.value = data.open || '공개';
+      fields.to.value = data.to || '';
+      fields.cc.value = data.cc || '';
+      fields.subject.value = data.subject || '';
+      fields.body.value = data.body || '';
+      fields.attach.value = data.attach || '';
+      fields.contact.value = data.contact || '';
+      fields.appr1.value = data.appr1 || '';
+      fields.appr2.value = data.appr2 || '';
+
+      if(data._savedAt){
+        lastSaved.textContent = `마지막 저장: ${data._savedAt}`;
+      }
+    }
+
+    function attachAutoSave(){
+      const handler = () => {
+        const data = dataFromForm();
+        applyToPreview(data);
+        saveToStorage(data, true);
+      };
+      Object.values(fields).forEach(f => {
+        f.addEventListener('input', handler);
+        f.addEventListener('change', handler);
+      });
+    }
+
+    function buildWordDocHtml(){
+      // Word가 잘 읽는 HTML(간단한 MHTML/OOXML 대신 HTML .doc 방식)
+      // 미리보기의 innerHTML을 그대로 쓰기 전에 불필요한 그림자/외곽은 제거
+      const a4 = document.getElementById('a4');
+      const content = a4.cloneNode(true);
+      content.style.border = 'none';
+      content.style.boxShadow = 'none';
+
+      const css = `
+        @page { size: A4; margin: 18mm 16mm; }
+        body { font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; }
+        .a4 { width: auto; min-height: auto; padding: 0; }
+        table { border-collapse: collapse; }
+      `;
+
+      return `<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>공문서</title>
+<style>${css}</style>
+</head>
+<body>
+${content.outerHTML}
+</body>
+</html>`;
+    }
+
+    function downloadDoc(){
+      // 저장 후 생성
+      const saved = saveToStorage(dataFromForm(), false);
+      applyToPreview(saved);
+
+      const html = buildWordDocHtml();
+      const blob = new Blob(["\ufeff", html], { type: 'application/msword' });
+
+      const subject = (saved.subject || '공문서').replace(/[\\/:*?"<>|]/g,'').trim();
+      const filename = `${subject || '공문서'}.doc`;
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function printPdf(){
+      // 인쇄 직전 저장
+      const saved = saveToStorage(dataFromForm(), false);
+      applyToPreview(saved);
+      window.print();
+    }
+
+    function manualSave(){
+      const saved = saveToStorage(dataFromForm(), true);
+      applyToPreview(saved);
+      saveState.textContent = '저장: 완료';
+      setTimeout(()=> saveState.textContent = '자동 저장: 대기', 1200);
+    }
+
+    function resetAll(){
+      const ok = confirm('입력 내용과 저장된 데이터가 모두 초기화됩니다. 진행할까요?');
+      if(!ok) return;
+
+      localStorage.removeItem(STORAGE_KEY);
+      Object.values(fields).forEach(f => {
+        if(f.tagName === 'SELECT') f.value = '공개';
+        else f.value = '';
+      });
+
+      lastSaved.textContent = '저장 기록 없음';
+      saveState.textContent = '자동 저장: 대기';
+      applyToPreview(dataFromForm());
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+
+    // init
+    (function init(){
+      const saved = loadFromStorage();
+      if(saved){
+        applyToForm(saved);
+        applyToPreview(saved);
+        if(saved._savedAt) lastSaved.textContent = `마지막 저장: ${saved._savedAt}`;
+      } else {
+        // 기본 시행일자: 오늘
+        const today = new Date();
+        const pad = (n)=> String(n).padStart(2,'0');
+        fields.date.value = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+        applyToPreview(dataFromForm());
+        saveToStorage(dataFromForm(), false);
+      }
+
+      attachAutoSave();
+
+      el('btnSave').addEventListener('click', manualSave);
+      el('btnDoc').addEventListener('click', downloadDoc);
+      el('btnPrint').addEventListener('click', printPdf);
+      el('btnReset').addEventListener('click', resetAll);
+    })();
+  </script>
+</body>
+</html>
