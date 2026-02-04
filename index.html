@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MBTI 간단 진단검사지</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:#121a33;
+      --muted:#9fb0ff;
+      --text:#eaf0ff;
+      --soft:#1b2550;
+      --accent:#6ee7ff;
+      --danger:#ff6b6b;
+      --ok:#7CFFB2;
+      --ring: rgba(110,231,255,.35);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+      background: radial-gradient(1200px 700px at 20% 10%, rgba(110,231,255,.16), transparent 55%),
+                  radial-gradient(1000px 600px at 90% 20%, rgba(159,176,255,.15), transparent 60%),
+                  var(--bg);
+      color:var(--text);
+      line-height:1.5;
+    }
+    header{
+      padding:28px 18px 18px;
+      max-width:980px;
+      margin:0 auto;
+    }
+    .title{
+      display:flex;
+      gap:14px;
+      align-items:flex-start;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    h1{
+      margin:0;
+      font-size:clamp(20px, 3vw, 30px);
+      letter-spacing:-0.02em;
+    }
+    .subtitle{
+      margin:8px 0 0;
+      color:rgba(234,240,255,.78);
+      font-size:14px;
+    }
+    main{
+      max-width:980px;
+      margin:0 auto;
+      padding:0 18px 32px;
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:16px;
+    }
+    @media (min-width: 900px){
+      main{grid-template-columns: 1.5fr .9fr; align-items:start}
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(18,26,51,.9), rgba(18,26,51,.72));
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:18px;
+      box-shadow: 0 18px 50px rgba(0,0,0,.38);
+      overflow:hidden;
+    }
+    .cardHeader{
+      padding:16px 16px 12px;
+      background: linear-gradient(180deg, rgba(27,37,80,.65), rgba(27,37,80,.0));
+      border-bottom:1px solid rgba(255,255,255,.07);
+      display:flex;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+    }
+    .cardHeader h2{margin:0; font-size:16px}
+    .pill{
+      font-size:12px;
+      padding:6px 10px;
+      border-radius:999px;
+      background: rgba(110,231,255,.12);
+      border:1px solid rgba(110,231,255,.22);
+      color: var(--accent);
+      user-select:none;
+      white-space:nowrap;
+    }
+    .cardBody{padding:14px 16px 16px}
+
+    .q{
+      padding:12px;
+      border-radius:14px;
+      background: rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.06);
+      margin-bottom:10px;
+    }
+    .qTop{display:flex; gap:10px; align-items:flex-start; justify-content:space-between}
+    .qNum{
+      width:26px; height:26px;
+      border-radius:8px;
+      display:grid; place-items:center;
+      background: rgba(159,176,255,.12);
+      border:1px solid rgba(159,176,255,.18);
+      color: rgba(234,240,255,.9);
+      font-size:13px;
+      flex: 0 0 auto;
+    }
+    .qText{margin:0; font-size:14px; color: rgba(234,240,255,.92)}
+    .choices{margin-top:10px; display:grid; gap:8px}
+
+    .choice{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      padding:10px 10px;
+      border-radius:12px;
+      background: rgba(18,26,51,.35);
+      border:1px solid rgba(255,255,255,.08);
+      cursor:pointer;
+      transition: transform .08s ease, border-color .12s ease, background .12s ease;
+      user-select:none;
+    }
+    .choice:hover{transform: translateY(-1px); border-color: rgba(110,231,255,.28); background: rgba(110,231,255,.08)}
+
+    input[type="radio"]{
+      width:18px; height:18px;
+      accent-color: var(--accent);
+    }
+
+    .controls{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+    button{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color: var(--text);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      transition: transform .08s ease, border-color .12s ease, background .12s ease;
+      font-weight:600;
+    }
+    button:hover{transform: translateY(-1px); border-color: rgba(110,231,255,.30); background: rgba(110,231,255,.10)}
+    button.primary{
+      background: linear-gradient(180deg, rgba(110,231,255,.25), rgba(110,231,255,.12));
+      border-color: rgba(110,231,255,.38);
+      color: var(--text);
+    }
+    button.danger{border-color: rgba(255,107,107,.35); background: rgba(255,107,107,.10)}
+
+    .sideSticky{position:sticky; top:14px}
+    .stat{display:grid; gap:10px}
+    .row{display:flex; align-items:center; justify-content:space-between; gap:10px}
+    .label{color: rgba(234,240,255,.72); font-size:12px}
+    .value{font-weight:700}
+
+    .bar{
+      height:10px;
+      border-radius:999px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+    }
+    .fill{height:100%; width:50%; background: linear-gradient(90deg, rgba(159,176,255,.75), rgba(110,231,255,.75));}
+
+    .resultBox{
+      margin-top:12px;
+      padding:12px;
+      border-radius:14px;
+      border:1px dashed rgba(110,231,255,.35);
+      background: rgba(110,231,255,.08);
+    }
+    .resultType{
+      font-size:26px;
+      font-weight:900;
+      letter-spacing:.08em;
+      margin:2px 0 8px;
+    }
+    .hint{font-size:12px; color: rgba(234,240,255,.76); margin:0}
+
+    .toast{
+      display:none;
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,107,107,.35);
+      background: rgba(255,107,107,.10);
+      color: rgba(255,255,255,.92);
+      font-size:13px;
+    }
+
+    footer{max-width:980px; margin:0 auto; padding:0 18px 28px; color: rgba(234,240,255,.55); font-size:12px}
+    a{color: var(--accent)}
+    code{background: rgba(255,255,255,.08); padding:2px 6px; border-radius:8px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="title">
+      <div>
+        <h1>MBTI 간단 진단검사지</h1>
+        <p class="subtitle">8문항 · 2지선다 · 결과는 참고용(가벼운 성향 체크)</p>
+      </div>
+      <div class="pill" id="progressPill">0 / 8 완료</div>
+    </div>
+  </header>
+
+  <main>
+    <section class="card" aria-label="검사지">
+      <div class="cardHeader">
+        <h2>질문에 답해 주세요</h2>
+        <span class="pill">E/I · S/N · T/F · J/P</span>
+      </div>
+      <div class="cardBody" id="questionList"></div>
+      <div class="cardBody" style="padding-top:0">
+        <div class="controls">
+          <button class="primary" id="btnResult">결과 보기</button>
+          <button id="btnCopy">결과 복사</button>
+          <button class="danger" id="btnReset">초기화</button>
+        </div>
+        <div class="toast" id="toast"></div>
+      </div>
+    </section>
+
+    <aside class="card sideSticky" aria-label="결과 패널">
+      <div class="cardHeader">
+        <h2>결과</h2>
+        <span class="pill" id="statusPill">대기 중</span>
+      </div>
+      <div class="cardBody">
+        <div class="stat" id="statArea">
+          <div>
+            <div class="row"><span class="label">E</span><span class="value" id="valE">0</span></div>
+            <div class="row"><span class="label">I</span><span class="value" id="valI">0</span></div>
+            <div class="bar"><div class="fill" id="barEI" style="width:50%"></div></div>
+            <p class="hint" style="margin-top:6px">사람/활동 에너지 방향</p>
+          </div>
+          <div>
+            <div class="row"><span class="label">S</span><span class="value" id="valS">0</span></div>
+            <div class="row"><span class="label">N</span><span class="value" id="valN">0</span></div>
+            <div class="bar"><div class="fill" id="barSN" style="width:50%"></div></div>
+            <p class="hint" style="margin-top:6px">정보 인식 방식</p>
+          </div>
+          <div>
+            <div class="row"><span class="label">T</span><span class="value" id="valT">0</span></div>
+            <div class="row"><span class="label">F</span><span class="value" id="valF">0</span></div>
+            <div class="bar"><div class="fill" id="barTF" style="width:50%"></div></div>
+            <p class="hint" style="margin-top:6px">의사결정 기준</p>
+          </div>
+          <div>
+            <div class="row"><span class="label">J</span><span class="value" id="valJ">0</span></div>
+            <div class="row"><span class="label">P</span><span class="value" id="valP">0</span></div>
+            <div class="bar"><div class="fill" id="barJP" style="width:50%"></div></div>
+            <p class="hint" style="margin-top:6px">생활 양식/계획 성향</p>
+          </div>
+        </div>
+
+        <div class="resultBox" id="resultBox" style="display:none">
+          <div class="label">당신의 결과(참고용)</div>
+          <div class="resultType" id="resultType">----</div>
+          <p class="hint" id="resultDesc">문항에 답한 뒤 ‘결과 보기’를 누르면 요약이 표시됩니다.</p>
+        </div>
+
+        <div style="margin-top:12px; padding:12px; border-radius:14px; background: rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.06)">
+          <p class="hint" style="margin:0">※ 본 페이지는 <b>간단 성향 체크</b>입니다. 실제 MBTI®(공식 검사)는 전문 기관/공인 검사에서 진행됩니다.</p>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <footer>
+    <div>사용법: 각 문항에서 더 가까운 선택지를 고른 뒤 <code>결과 보기</code>를 누르세요. 파일로 저장하려면 이 페이지를 <code>.html</code>로 저장 후 브라우저에서 열면 됩니다.</div>
+  </footer>
+
+  <script>
+    // MBTI 간단 진단 문항 (2문항/축 = 총 8문항)
+    // 각 선택지는 어느 쪽(예: E 또는 I)에 1점인지 key로 지정
+    const QUESTIONS = [
+      { axis: 'EI', text: '새로운 사람들과 어울리는 자리가 있으면?', a: { label: '에너지가 올라가고 말이 많아진다', key: 'E' }, b: { label: '에너지가 빨리 소모되어 조용해진다', key: 'I' } },
+      { axis: 'EI', text: '주말에 쉬는 방식은?', a: { label: '밖에서 활동/약속을 만들며 쉰다', key: 'E' }, b: { label: '집에서 혼자 재충전하며 쉰다', key: 'I' } },
+
+      { axis: 'SN', text: '설명/대화에서 더 믿음 가는 쪽은?', a: { label: '구체적인 사실, 경험, 예시', key: 'S' }, b: { label: '큰 그림, 가능성, 아이디어', key: 'N' } },
+      { axis: 'SN', text: '새로운 것을 배울 때 더 먼저 하는 것은?', a: { label: '절차와 사용법을 따라 해본다', key: 'S' }, b: { label: '원리/의미를 먼저 파악한다', key: 'N' } },
+
+      { axis: 'TF', text: '갈등 상황에서 내가 더 신경 쓰는 것은?', a: { label: '논리적 타당성/원칙', key: 'T' }, b: { label: '상대 감정/관계의 온도', key: 'F' } },
+      { axis: 'TF', text: '피드백을 받을 때 더 선호하는 스타일은?', a: { label: '정확하고 직설적인 개선점', key: 'T' }, b: { label: '격려와 공감이 담긴 표현', key: 'F' } },
+
+      { axis: 'JP', text: '여행/과제 준비는 보통?', a: { label: '계획을 세워 체크리스트대로', key: 'J' }, b: { label: '큰 틀만 잡고 그때그때', key: 'P' } },
+      { axis: 'JP', text: '마감이 다가올수록 나는?', a: { label: '미리 끝내 두고 마음 편해진다', key: 'J' }, b: { label: '막판 집중으로 속도를 낸다', key: 'P' } },
+    ];
+
+    const DESCRIPTIONS = {
+      E: '사람/활동에서 에너지를 얻는 편',
+      I: '혼자/내면에서 에너지를 충전하는 편',
+      S: '현실적·구체적 정보에 강한 편',
+      N: '아이디어·가능성 중심으로 보는 편',
+      T: '원칙·논리로 판단하려는 편',
+      F: '사람·가치를 고려해 판단하는 편',
+      J: '정리·계획으로 안정감을 얻는 편',
+      P: '유연·즉흥으로 가능성을 여는 편',
+    };
+
+    const $ = (sel) => document.querySelector(sel);
+    const questionList = $('#questionList');
+
+    function renderQuestions(){
+      questionList.innerHTML = '';
+      QUESTIONS.forEach((q, idx) => {
+        const qEl = document.createElement('div');
+        qEl.className = 'q';
+        qEl.innerHTML = `
+          <div class="qTop">
+            <div style="display:flex; gap:10px; align-items:flex-start">
+              <div class="qNum">${idx+1}</div>
+              <p class="qText">${q.text}</p>
+            </div>
+            <span class="pill" title="축">${q.axis}</span>
+          </div>
+          <div class="choices" role="radiogroup" aria-label="문항 ${idx+1}">
+            <label class="choice">
+              <input type="radio" name="q${idx}" value="${q.a.key}" />
+              <span>${q.a.label}</span>
+            </label>
+            <label class="choice">
+              <input type="radio" name="q${idx}" value="${q.b.key}" />
+              <span>${q.b.label}</span>
+            </label>
+          </div>
+        `;
+        questionList.appendChild(qEl);
+      });
+
+      // click label improves but ensure radio updates progress
+      questionList.addEventListener('change', updateProgress, { once:false });
+      updateProgress();
+    }
+
+    function getAnswers(){
+      const answers = [];
+      for(let i=0;i<QUESTIONS.length;i++){
+        const checked = document.querySelector(`input[name="q${i}"]:checked`);
+        answers.push(checked ? checked.value : null);
+      }
+      return answers;
+    }
+
+    function tally(answers){
+      const score = {E:0,I:0,S:0,N:0,T:0,F:0,J:0,P:0};
+      answers.forEach(v => { if(v) score[v]++; });
+      return score;
+    }
+
+    function decideType(score){
+      const type = [
+        score.E >= score.I ? 'E' : 'I',
+        score.S >= score.N ? 'S' : 'N',
+        score.T >= score.F ? 'T' : 'F',
+        score.J >= score.P ? 'J' : 'P',
+      ].join('');
+      return type;
+    }
+
+    function pct(left, right){
+      const total = left + right;
+      if(total === 0) return 50;
+      return Math.round((left / total) * 100);
+    }
+
+    function updateBars(score){
+      $('#valE').textContent = score.E;
+      $('#valI').textContent = score.I;
+      $('#valS').textContent = score.S;
+      $('#valN').textContent = score.N;
+      $('#valT').textContent = score.T;
+      $('#valF').textContent = score.F;
+      $('#valJ').textContent = score.J;
+      $('#valP').textContent = score.P;
+
+      $('#barEI').style.width = pct(score.E, score.I) + '%';
+      $('#barSN').style.width = pct(score.S, score.N) + '%';
+      $('#barTF').style.width = pct(score.T, score.F) + '%';
+      $('#barJP').style.width = pct(score.J, score.P) + '%';
+    }
+
+    function updateProgress(){
+      const answers = getAnswers();
+      const done = answers.filter(v => v !== null).length;
+      $('#progressPill').textContent = `${done} / ${QUESTIONS.length} 완료`;
+
+      const score = tally(answers);
+      updateBars(score);
+
+      if(done === QUESTIONS.length){
+        $('#statusPill').textContent = '완료';
+        $('#statusPill').style.borderColor = 'rgba(124,255,178,.35)';
+        $('#statusPill').style.background = 'rgba(124,255,178,.10)';
+        $('#statusPill').style.color = 'var(--ok)';
+      } else {
+        $('#statusPill').textContent = '진행 중';
+        $('#statusPill').style.borderColor = 'rgba(110,231,255,.22)';
+        $('#statusPill').style.background = 'rgba(110,231,255,.10)';
+        $('#statusPill').style.color = 'var(--accent)';
+      }
+    }
+
+    function showToast(msg, isError=true){
+      const t = $('#toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      t.style.borderColor = isError ? 'rgba(255,107,107,.35)' : 'rgba(124,255,178,.35)';
+      t.style.background = isError ? 'rgba(255,107,107,.10)' : 'rgba(124,255,178,.10)';
+      setTimeout(() => { t.style.display = 'none'; }, 2200);
+    }
+
+    function buildSummary(type){
+      const letters = type.split('');
+      return letters.map(l => `${l}(${DESCRIPTIONS[l]})`).join(' · ');
+    }
+
+    function handleResult(){
+      const answers = getAnswers();
+      const done = answers.filter(v => v !== null).length;
+      if(done !== QUESTIONS.length){
+        showToast('아직 모든 문항에 답하지 않았어요. (8문항 전부 체크!)', true);
+        $('#resultBox').style.display = 'none';
+        return;
+      }
+
+      const score = tally(answers);
+      const type = decideType(score);
+      updateBars(score);
+
+      $('#resultBox').style.display = 'block';
+      $('#resultType').textContent = type;
+      $('#resultDesc').textContent = buildSummary(type);
+      showToast('결과가 생성되었습니다!', false);
+    }
+
+    async function handleCopy(){
+      const type = $('#resultType').textContent;
+      const has = type && type !== '----';
+      if(!has){
+        showToast('먼저 결과 보기를 눌러 결과를 만든 뒤 복사해 주세요.', true);
+        return;
+      }
+      const text = `MBTI 간단 진단 결과: ${type}\n${$('#resultDesc').textContent}`;
+      try{
+        await navigator.clipboard.writeText(text);
+        showToast('복사 완료!', false);
+      } catch(e){
+        // Fallback
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast('복사 완료!', false);
+      }
+    }
+
+    function handleReset(){
+      document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+      $('#resultBox').style.display = 'none';
+      $('#resultType').textContent = '----';
+      $('#resultDesc').textContent = '문항에 답한 뒤 ‘결과 보기’를 누르면 요약이 표시됩니다.';
+      $('#statusPill').textContent = '대기 중';
+      $('#statusPill').style.borderColor = 'rgba(255,255,255,.10)';
+      $('#statusPill').style.background = 'rgba(255,255,255,.06)';
+      $('#statusPill').style.color = 'var(--text)';
+      updateProgress();
+      showToast('초기화했어요.', false);
+      window.scrollTo({top:0, behavior:'smooth'});
+    }
+
+    // init
+    renderQuestions();
+
+    $('#btnResult').addEventListener('click', handleResult);
+    $('#btnCopy').addEventListener('click', handleCopy);
+    $('#btnReset').addEventListener('click', handleReset);
+  </script>
+</body>
+</html>
